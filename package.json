@@ -1,0 +1,22 @@
+{
+  "name": "skyprepaviation",
+  "version": "1.0.0",
+  "description": "SkyPrep is a modern aviation training platform designed to help student pilots pass their FAA written exams and oral checkrides with confidence. Powered by AI, it offers realistic oral exam simulations that mimic real DPE questioning, spaced repetition flashcards, full-length practice written exams covering PPL, IFR, CPL, and ATP.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "aviation",
+    "FAA",
+    "pilot training",
+    "exam preparation",
+    "oral checkride"
+  ],
+  "author": "Stravon004",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {}
+}
