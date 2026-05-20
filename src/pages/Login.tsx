@@ -16,11 +16,7 @@ export default function Login() {
     setLoading(true)
     const { error } = await signIn(email, password)
     setLoading(false)
-    if (error) {
-      setError(error.message)
-    } else {
-      navigate('/dashboard')
-    }
+    if (error) { setError(error.message) } else { navigate('/dashboard') }
   }
 
   return (
@@ -34,49 +30,21 @@ export default function Login() {
           <h1 className="text-3xl font-bold text-white">Welcome back</h1>
           <p className="text-slate-400 mt-2">Sign in to continue your training</p>
         </div>
-
         <form onSubmit={handleSubmit} className="card space-y-5">
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl px-4 py-3 text-sm">
-              {error}
-            </div>
-          )}
-
+          {error && <div className="bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl px-4 py-3 text-sm">{error}</div>}
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1.5">Email address</label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              className="input-field"
-              placeholder="you@example.com"
-              required
-              autoComplete="email"
-            />
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="input-field" placeholder="you@example.com" required autoComplete="email" />
           </div>
-
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1.5">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              className="input-field"
-              placeholder="••••••••"
-              required
-              autoComplete="current-password"
-            />
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="input-field" placeholder="••••••••" required autoComplete="current-password" />
           </div>
-
-          <button type="submit" disabled={loading} className="btn-primary w-full justify-center flex items-center gap-2">
-            {loading ? (
-              <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : 'Sign In'}
+          <button type="submit" disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2">
+            {loading ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Sign In'}
           </button>
-
           <p className="text-center text-sm text-slate-500">
-            Don't have an account?{' '}
-            <Link to="/signup" className="text-sky-400 hover:text-sky-300 font-medium">Create one free</Link>
+            Don't have an account? <Link to="/signup" className="text-sky-400 hover:text-sky-300 font-medium">Create one free</Link>
           </p>
         </form>
       </div>

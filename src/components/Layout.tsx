@@ -21,7 +21,6 @@ export default function Layout() {
 
   return (
     <div className="flex h-screen bg-slate-950 overflow-hidden">
-      {/* Sidebar */}
       <aside className="w-64 flex-shrink-0 bg-slate-900 border-r border-slate-800 flex flex-col">
         <div className="p-6 border-b border-slate-800">
           <Link to="/" className="flex items-center gap-2">
@@ -54,7 +53,7 @@ export default function Layout() {
         <div className="p-4 border-t border-slate-800">
           <div className="flex items-center gap-3 mb-3 px-2">
             <div className="w-8 h-8 bg-sky-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-              {profile?.full_name?.charAt(0).toUpperCase() ?? profile?.email.charAt(0).toUpperCase() ?? '?'}
+              {(profile?.full_name ?? profile?.email ?? '?').charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-slate-100 truncate">{profile?.full_name ?? 'Pilot'}</p>
@@ -71,7 +70,6 @@ export default function Layout() {
         </div>
       </aside>
 
-      {/* Main content */}
       <main className="flex-1 overflow-y-auto">
         <Outlet />
       </main>

@@ -8,7 +8,6 @@ const plans = [
     price: 0,
     period: '',
     description: 'Get started with the basics — no card required.',
-    tier: 'free',
     features: [
       { text: '50 practice questions (PPL only)', included: true },
       { text: '20 flashcard reviews per day', included: true },
@@ -16,8 +15,6 @@ const plans = [
       { text: 'Full-length timed exams', included: false },
       { text: 'IFR / CPL / ATP question banks', included: false },
       { text: 'AI oral exam simulator', included: false },
-      { text: 'Unlimited flashcard reviews', included: false },
-      { text: 'Detailed answer explanations', included: false },
     ],
     cta: 'Start Free',
     ctaLink: '/signup',
@@ -28,7 +25,6 @@ const plans = [
     price: 19,
     period: '/month',
     description: 'Everything you need to ace your private pilot certificate.',
-    tier: 'student',
     badge: 'Most Popular',
     features: [
       { text: 'Full PPL & IFR question banks (5,000+ questions)', included: true },
@@ -38,7 +34,6 @@ const plans = [
       { text: 'Progress analytics by topic', included: true },
       { text: 'AI oral exam simulator (10 sessions/mo)', included: true },
       { text: 'CPL / ATP question banks', included: false },
-      { text: 'Unlimited AI oral sessions', included: false },
     ],
     cta: 'Start Student Plan',
     ctaLink: '/signup',
@@ -49,7 +44,6 @@ const plans = [
     price: 39,
     period: '/month',
     description: 'The complete toolkit for serious career-track pilots.',
-    tier: 'pro',
     features: [
       { text: 'All question banks: PPL, IFR, CPL, ATP', included: true },
       { text: 'Unlimited timed practice exams', included: true },
@@ -58,7 +52,6 @@ const plans = [
       { text: 'Advanced analytics & weak area reports', included: true },
       { text: 'Unlimited AI oral exam sessions', included: true },
       { text: 'Priority support', included: true },
-      { text: 'Early access to new features', included: true },
     ],
     cta: 'Start Pro Plan',
     ctaLink: '/signup',
@@ -70,7 +63,6 @@ export default function Pricing() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <Navbar />
-
       <section className="pt-32 pb-24 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
@@ -94,12 +86,11 @@ export default function Pricing() {
                     : 'bg-slate-900 border border-slate-800'
                 }`}
               >
-                {plan.badge && (
+                {'badge' in plan && plan.badge && (
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                    <span className="bg-sky-600 text-white text-xs font-semibold px-4 py-1.5 rounded-full">{plan.badge}</span>
+                    <span className="bg-sky-600 text-white text-xs font-semibold px-4 py-1.5 rounded-full">{plan.badge as string}</span>
                   </div>
                 )}
-
                 <div className="mb-6">
                   <h2 className="text-xl font-bold text-white mb-1">{plan.name}</h2>
                   <p className="text-slate-400 text-sm mb-4">{plan.description}</p>
@@ -108,7 +99,6 @@ export default function Pricing() {
                     <span className="text-slate-400 text-sm">{plan.period}</span>
                   </div>
                 </div>
-
                 <ul className="space-y-3 flex-1 mb-8">
                   {plan.features.map(f => (
                     <li key={f.text} className="flex items-start gap-2.5">
@@ -121,25 +111,22 @@ export default function Pricing() {
                     </li>
                   ))}
                 </ul>
-
                 <Link
                   to={plan.ctaLink}
                   className={`w-full text-center py-3 px-6 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
                     plan.highlight
-                      ? 'bg-sky-600 hover:bg-sky-500 text-white shadow-lg shadow-sky-500/20'
+                      ? 'bg-sky-600 hover:bg-sky-500 text-white'
                       : 'bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700'
                   }`}
                 >
-                  {plan.cta}
-                  <ArrowRight size={15} />
+                  {plan.cta} <ArrowRight size={15} />
                 </Link>
               </div>
             ))}
           </div>
 
-          <div className="mt-16 text-center">
-            <p className="text-slate-500 text-sm mb-2">All plans come with a 7-day money-back guarantee.</p>
-            <p className="text-slate-600 text-xs">Secure payments. Cancel anytime. No hidden fees.</p>
+          <div className="mt-12 text-center">
+            <p className="text-slate-500 text-sm">All plans come with a 7-day money-back guarantee. Cancel anytime.</p>
           </div>
         </div>
       </section>

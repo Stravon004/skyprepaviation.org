@@ -19,23 +19,21 @@ interface FlashCard {
 
 type Rating = 'again' | 'hard' | 'good' | 'easy'
 
-function sm2(ef: number, interval: number, reps: number, rating: Rating): { ef: number, interval: number, reps: number } {
+function sm2(ef: number, interval: number, reps: number, rating: Rating) {
   const q = rating === 'again' ? 1 : rating === 'hard' ? 2 : rating === 'good' ? 4 : 5
-  let newEf = ef + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02))
-  newEf = Math.max(1.3, newEf)
+  let newEf = Math.max(1.3, ef + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02)))
   let newInterval: number
   let newReps: number
   if (q < 3) {
-    newReps = 0
-    newInterval = 1
+    newReps = 0; newInterval = 1
   } else {
     newReps = reps + 1
-    if (reps === 0) newInterval = 1
-    else if (reps === 1) newInterval = 6
-    else newInterval = Math.round(interval * newEf)
+    newInterval = reps === 0 ? 1 : reps === 1 ? 6 : Math.round(interval * newEf)
   }
   return { ef: newEf, interval: newInterval, reps: newReps }
 }
+
+type ProgressRow = { id: string; question_id: string; ease_factor: number; interval_days: number; repetitions: number; next_review_at: string }
 
 export default function Flashcards() {
   const { user, profile } = useAuth()
@@ -52,7 +50,6 @@ export default function Flashcards() {
     async function load() {
       if (!user) return
 
-      // Get all progress records with upcoming reviews
       const { data: progress } = await supabase
         .from('flashcard_progress')
         .select('id, question_id, ease_factor, interval_days, repetitions, next_review_at')
@@ -61,23 +58,19 @@ export default function Flashcards() {
         .order('next_review_at')
         .limit(dailyLimit)
 
-      type ProgressRow = { id: string; question_id: string; ease_factor: number; interval_days: number; repetitions: number; next_review_at: string }
       let questionIds: string[] = []
       const progressMap: Record<string, ProgressRow> = {}
 
       if (progress && progress.length > 0) {
-        questionIds = (progress as ProgressRow[]).map(p => p.question_id);
-        (progress as ProgressRow[]).forEach(p => { progressMap[p.question_id] = p })
+        const rows = progress as ProgressRow[]
+        questionIds = rows.map(p => p.question_id)
+        rows.forEach(p => { progressMap[p.question_id] = p })
       }
 
-      // Fill with new questions if we have room
-      const { data: allQIds } = await supabase
-        .from('questions')
-        .select('id')
-        .limit(200)
-
-      const existingIds = new Set((await supabase.from('flashcard_progress').select('question_id').eq('user_id', user.id)).data?.map(p => p.question_id) ?? [])
-      const newIds = (allQIds ?? []).map(q => q.id).filter(id => !existingIds.has(id))
+      const { data: allQIds } = await supabase.from('questions').select('id').limit(200)
+      const { data: existingProgress } = await supabase.from('flashcard_progress').select('question_id').eq('user_id', user.id)
+      const existingIds = new Set((existingProgress ?? []).map((p: { question_id: string }) => p.question_id))
+      const newIds = (allQIds ?? []).map((q: { id: string }) => q.id).filter(id => !existingIds.has(id))
       const needed = Math.max(0, Math.min(dailyLimit, 20) - questionIds.length)
       questionIds = [...questionIds, ...newIds.slice(0, needed)]
 
@@ -98,7 +91,6 @@ export default function Flashcards() {
           repetitions: progressMap[q.id]?.repetitions ?? 0,
         })))
       }
-
       setLoading(false)
     }
     load()
@@ -107,11 +99,7 @@ export default function Flashcards() {
   async function handleRating(rating: Rating) {
     if (!user) return
     const card = cards[currentIdx]
-    const ef = card.easeFactor ?? 2.5
-    const interval = card.intervalDays ?? 1
-    const reps = card.repetitions ?? 0
-    const { ef: newEf, interval: newInterval, reps: newReps } = sm2(ef, interval, reps, rating)
-
+    const { ef: newEf, interval: newInterval, reps: newReps } = sm2(card.easeFactor ?? 2.5, card.intervalDays ?? 1, card.repetitions ?? 0, rating)
     const nextReview = new Date()
     nextReview.setDate(nextReview.getDate() + newInterval)
 
@@ -150,22 +138,20 @@ export default function Flashcards() {
   )
 
   if (sessionDone) return (
-    <div className="p-8 flex flex-col items-center justify-center h-full max-w-md mx-auto text-center animate-fade-in">
+    <div className="p-8 flex flex-col items-center justify-center h-full max-w-md mx-auto text-center">
       <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mb-6">
         <Brain size={28} className="text-emerald-400" />
       </div>
       <h2 className="text-2xl font-bold text-white mb-2">Session Complete!</h2>
       <p className="text-slate-400 mb-2">You reviewed {reviewed} card{reviewed !== 1 ? 's' : ''} today.</p>
-      <p className="text-slate-500 text-sm mb-8">Cards you found difficult will appear again sooner. Come back tomorrow for your next review session.</p>
+      <p className="text-slate-500 text-sm mb-8">Cards you found difficult will appear sooner. Come back tomorrow for your next session.</p>
       <button onClick={() => { setSessionDone(false); setCurrentIdx(0); setReviewed(0); setFlipped(false) }} className="btn-secondary flex items-center gap-2">
-        <RotateCcw size={16} />
-        Study Again
+        <RotateCcw size={16} />Study Again
       </button>
     </div>
   )
 
   const card = cards[currentIdx]
-  const progress = ((currentIdx + 1) / cards.length) * 100
 
   return (
     <div className="p-8 max-w-2xl mx-auto animate-fade-in">
@@ -182,26 +168,25 @@ export default function Flashcards() {
 
       <div className="mb-4">
         <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-          <div className="h-full bg-sky-600 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
+          <div className="h-full bg-sky-600 rounded-full transition-all duration-500" style={{ width: `${((currentIdx + 1) / cards.length) * 100}%` }} />
         </div>
       </div>
 
-      <div className="mb-4 flex items-center gap-2">
+      <div className="flex gap-2 mb-4">
         <span className="badge bg-slate-800 text-slate-400 border border-slate-700 text-xs">{card.certificate}</span>
         <span className="badge bg-slate-800 text-slate-400 border border-slate-700 text-xs">{card.category}</span>
       </div>
 
-      {/* Card */}
       <div
-        className={`card min-h-64 cursor-pointer select-none transition-all duration-300 hover:border-slate-700 mb-6 ${flipped ? 'border-sky-800/50 bg-sky-950/20' : ''}`}
+        className={`card min-h-64 cursor-pointer select-none transition-all duration-200 hover:border-slate-700 mb-6 ${flipped ? 'border-sky-800/50 bg-sky-950/20' : ''}`}
         onClick={() => setFlipped(f => !f)}
       >
         {!flipped ? (
           <div className="flex flex-col h-full">
             <p className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-4">Question</p>
             <p className="text-white text-lg leading-relaxed flex-1">{card.question}</p>
-            <div className="mt-6 pt-4 border-t border-slate-800">
-              <p className="text-slate-500 text-sm text-center">Tap to reveal answer</p>
+            <div className="mt-6 pt-4 border-t border-slate-800 text-center">
+              <p className="text-slate-500 text-sm">Tap to reveal answer</p>
             </div>
           </div>
         ) : (
@@ -216,22 +201,17 @@ export default function Flashcards() {
         )}
       </div>
 
-      {/* Rating buttons */}
       {flipped && (
         <div className="animate-slide-up">
           <p className="text-slate-500 text-xs text-center mb-3 uppercase tracking-wide">How well did you know this?</p>
           <div className="grid grid-cols-4 gap-3">
-            {[
+            {([
               { rating: 'again' as Rating, label: 'Again', icon: RotateCcw, color: 'text-red-400', bg: 'hover:bg-red-500/10 hover:border-red-500/40' },
               { rating: 'hard' as Rating, label: 'Hard', icon: ThumbsDown, color: 'text-amber-400', bg: 'hover:bg-amber-500/10 hover:border-amber-500/40' },
               { rating: 'good' as Rating, label: 'Good', icon: Minus, color: 'text-sky-400', bg: 'hover:bg-sky-500/10 hover:border-sky-500/40' },
               { rating: 'easy' as Rating, label: 'Easy', icon: ThumbsUp, color: 'text-emerald-400', bg: 'hover:bg-emerald-500/10 hover:border-emerald-500/40' },
-            ].map(({ rating, label, icon: Icon, color, bg }) => (
-              <button
-                key={rating}
-                onClick={() => handleRating(rating)}
-                className={`card text-center py-3 cursor-pointer transition-all ${bg} active:scale-95`}
-              >
+            ]).map(({ rating, label, icon: Icon, color, bg }) => (
+              <button key={rating} onClick={() => handleRating(rating)} className={`card text-center py-3 cursor-pointer transition-all ${bg} active:scale-95`}>
                 <Icon size={18} className={`${color} mx-auto mb-1.5`} />
                 <p className={`text-xs font-semibold ${color}`}>{label}</p>
               </button>

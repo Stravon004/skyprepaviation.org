@@ -16,7 +16,7 @@ export default function Navbar() {
   }, [])
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-slate-950/95 backdrop-blur-md border-b border-slate-800/50 shadow-xl' : 'bg-transparent'}`}>
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-slate-950/95 backdrop-blur-md border-b border-slate-800/50' : 'bg-transparent'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2">
@@ -27,17 +27,14 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-8">
             <Link to="/pricing" className="text-slate-400 hover:text-white text-sm font-medium transition-colors">Pricing</Link>
             <a href="#features" className="text-slate-400 hover:text-white text-sm font-medium transition-colors">Features</a>
-            <a href="#testimonials" className="text-slate-400 hover:text-white text-sm font-medium transition-colors">Reviews</a>
           </div>
 
           <div className="hidden md:flex items-center gap-3">
             {user ? (
-              <button onClick={() => navigate('/dashboard')} className="btn-primary text-sm py-2 px-5">
-                Go to Dashboard
-              </button>
+              <button onClick={() => navigate('/dashboard')} className="btn-primary text-sm py-2 px-5">Dashboard</button>
             ) : (
               <>
-                <Link to="/login" className="text-slate-300 hover:text-white text-sm font-medium transition-colors px-4 py-2">Sign in</Link>
+                <Link to="/login" className="text-slate-300 hover:text-white text-sm font-medium px-4 py-2">Sign in</Link>
                 <Link to="/signup" className="btn-primary text-sm py-2 px-5">Start Free</Link>
               </>
             )}
@@ -51,8 +48,8 @@ export default function Navbar() {
 
       {mobileOpen && (
         <div className="md:hidden bg-slate-900 border-t border-slate-800 p-4 space-y-3">
-          <Link to="/pricing" className="block text-slate-300 hover:text-white py-2 text-sm font-medium" onClick={() => setMobileOpen(false)}>Pricing</Link>
-          <a href="#features" className="block text-slate-300 hover:text-white py-2 text-sm font-medium" onClick={() => setMobileOpen(false)}>Features</a>
+          <Link to="/pricing" className="block text-slate-300 hover:text-white py-2 text-sm" onClick={() => setMobileOpen(false)}>Pricing</Link>
+          <a href="#features" className="block text-slate-300 hover:text-white py-2 text-sm" onClick={() => setMobileOpen(false)}>Features</a>
           <div className="pt-2 space-y-2">
             {user ? (
               <button onClick={() => { navigate('/dashboard'); setMobileOpen(false) }} className="btn-primary w-full text-sm">Dashboard</button>
