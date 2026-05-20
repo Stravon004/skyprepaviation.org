@@ -1,22 +1,31 @@
 {
   "name": "skyprepaviation",
   "version": "1.0.0",
-  "description": "SkyPrep is a modern aviation training platform designed to help student pilots pass their FAA written exams and oral checkrides with confidence. Powered by AI, it offers realistic oral exam simulations that mimic real DPE questioning, spaced repetition flashcards, full-length practice written exams covering PPL, IFR, CPL, and ATP.",
-  "main": "index.js",
+  "description": "SkyPrep - Modern aviation training platform for FAA written exams and oral checkrides",
+  "type": "module",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
   },
-  "keywords": [
-    "aviation",
-    "FAA",
-    "pilot training",
-    "exam preparation",
-    "oral checkride"
-  ],
+  "keywords": ["aviation", "FAA", "pilot training", "exam preparation", "oral checkride"],
   "author": "Stravon004",
   "license": "MIT",
-  "dependencies": {},
-  "devDependencies": {}
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.0",
+    "lucide-react": "^0.441.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "typescript": "^5.5.3",
+    "vite": "^5.4.1",
+    "tailwindcss": "^3.4.10",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.41"
+  }
 }
