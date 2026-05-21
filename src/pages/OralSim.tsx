@@ -26,58 +26,21 @@ const OPENING_QUESTIONS: Record<Scenario, string> = {
   navigation: "You're on a cross-country and your GPS has failed. You have VOR receivers and a current sectional. Describe how you would navigate the remaining 80 nautical miles to your destination.",
 }
 
-const FOLLOW_UPS: Record<Scenario, string[]> = {
-  preflight: [
-    "You mentioned weather — if the destination TAF shows TEMPO 2 SM -RA OVC010 for your arrival time, what do you do?",
-    "Your weight and balance puts you 50 pounds over gross weight. What are your options?",
-    "Walk me through the fuel requirements for this flight under FAR 91.",
-  ],
-  weather: [
-    "What's the difference between a SIGMET and an AIRMET? Give me an example of when each would be issued.",
-    "Describe the characteristics of a cold front passage. What weather would you expect before, during, and after?",
-    "You're approaching a towering cumulus cloud. What's your plan?",
-  ],
-  emergencies: [
-    "During your forced landing, you realize you won't make the field you selected. How do you handle this?",
-    "What are the memory items for an electrical fire in flight?",
-    "You have a partial panel — your attitude indicator has failed. How do you maintain aircraft control?",
-  ],
-  airspace: [
-    "You want to fly through Class B airspace. What do you need?",
-    "Describe the dimensions of Class D airspace and what communication requirements apply.",
-    "There's a TFR over a stadium tonight. How would you find out about it and what happens if you violate it?",
-  ],
-  navigation: [
-    "You're tracking a VOR radial and the needle deflects. What does each dot represent?",
-    "How do you calculate a magnetic heading from a true course?",
-    "Your sectional shows your destination as a non-towered airport. How do you get traffic advisories?",
-  ],
-}
-
-function getResponse(scenario: Scenario, student: string, count: number): string {
-  const fu = FOLLOW_UPS[scenario]
-  const idx = count % fu.length
-  if (student.length < 30) return "I need a more complete answer. Walk me through your step-by-step process."
-  const opts = [
-    `Good. Now let's dig deeper. ${fu[idx]}`,
-    `That's correct. I'd like to follow up. ${fu[(idx + 1) % fu.length]}`,
-    `Alright. Let me push you on this. ${fu[(idx + 2) % fu.length]}`,
-    `You're on the right track. One more: ${fu[idx]}`,
-  ]
-  return opts[count % opts.length]
-}
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 export default function OralSim() {
-  const { profile } = useAuth()
-  const isSubscribed = profile?.subscription_tier === 'student' || profile?.subscription_tier === 'pro'
+  const { profile, session } = useAuth()
+  const isSubscribed = profile?.subscription_tier === 'basic' || profile?.subscription_tier === 'pro'
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [questionCount, setQuestionCount] = useState(0)
-  const [isTyping, setIsTyping] = useState(false)
+  const [isStreaming, setIsStreaming] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const abortRef = useRef<AbortController | null>(null)
 
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, isTyping])
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
   function startScenario(scenario: Scenario) {
     setSelectedScenario(scenario)
@@ -86,16 +49,74 @@ export default function OralSim() {
   }
 
   async function sendMessage() {
-    if (!input.trim() || isTyping) return
-    const studentMsg: Message = { role: 'student', content: input.trim() }
-    setMessages(prev => [...prev, studentMsg])
+    if (!input.trim() || isStreaming) return
+    const userText = input.trim()
     setInput('')
-    setIsTyping(true)
-    await new Promise(r => setTimeout(r, 1200 + Math.random() * 800))
-    const response = getResponse(selectedScenario!, studentMsg.content, questionCount)
-    setMessages(prev => [...prev, { role: 'examiner', content: response }])
-    setQuestionCount(q => q + 1)
-    setIsTyping(false)
+
+    const newMessages: Message[] = [...messages, { role: 'student', content: userText }]
+    setMessages(newMessages)
+    setIsStreaming(true)
+
+    // Build conversation history for the API (examiner = assistant, student = user)
+    const apiMessages = newMessages.map(m => ({
+      role: m.role === 'student' ? 'user' as const : 'assistant' as const,
+      content: m.content,
+    }))
+
+    // Add placeholder for streaming response
+    setMessages(prev => [...prev, { role: 'examiner', content: '' }])
+
+    try {
+      const abort = new AbortController()
+      abortRef.current = abort
+
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/oral-sim`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token ?? SUPABASE_ANON_KEY}`,
+          'Apikey': SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({ scenario: selectedScenario, messages: apiMessages }),
+        signal: abort.signal,
+      })
+
+      if (!resp.ok || !resp.body) {
+        throw new Error(`Request failed: ${resp.status}`)
+      }
+
+      const reader = resp.body.getReader()
+      const decoder = new TextDecoder()
+      let accumulated = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        accumulated += decoder.decode(value, { stream: true })
+        setMessages(prev => {
+          const updated = [...prev]
+          updated[updated.length - 1] = { role: 'examiner', content: accumulated }
+          return updated
+        })
+        bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+      }
+
+      setQuestionCount(q => q + 1)
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') {
+        setMessages(prev => {
+          const updated = [...prev]
+          updated[updated.length - 1] = {
+            role: 'examiner',
+            content: 'I apologize, I encountered a technical issue. Please try again.',
+          }
+          return updated
+        })
+      }
+    } finally {
+      setIsStreaming(false)
+      abortRef.current = null
+    }
   }
 
   if (!isSubscribed) return (
@@ -104,7 +125,7 @@ export default function OralSim() {
         <Lock size={28} className="text-amber-400" />
       </div>
       <h2 className="text-2xl font-bold text-white mb-3">AI Oral Simulator</h2>
-      <p className="text-slate-400 mb-6">Practice realistic DPE-style oral questioning with our AI examiner. Available on Student and Pro plans.</p>
+      <p className="text-slate-400 mb-6">Practice realistic DPE-style oral questioning with our AI examiner. Available on Basic and Pro plans.</p>
       <Link to="/pricing" className="btn-primary flex items-center gap-2">Upgrade to Unlock <ArrowRight size={16} /></Link>
     </div>
   )
@@ -138,7 +159,7 @@ export default function OralSim() {
           <h2 className="font-semibold text-white">{SCENARIOS[selectedScenario].label}</h2>
           <p className="text-xs text-slate-500">{questionCount} questions answered</p>
         </div>
-        <button onClick={() => setSelectedScenario(null)} className="text-slate-400 hover:text-white text-sm transition-colors">Change Topic</button>
+        <button onClick={() => { abortRef.current?.abort(); setSelectedScenario(null) }} className="text-slate-400 hover:text-white text-sm transition-colors">Change Topic</button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
@@ -152,21 +173,17 @@ export default function OralSim() {
                 {msg.role === 'examiner' ? 'Examiner' : 'You'}
               </p>
               <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${msg.role === 'examiner' ? 'bg-slate-800 text-slate-200 rounded-tl-sm' : 'bg-sky-600/20 border border-sky-600/30 text-sky-100 rounded-tr-sm'}`}>
-                {msg.content}
+                {msg.content || (
+                  <span className="flex gap-1 items-center py-0.5">
+                    {[0, 150, 300].map(d => (
+                      <span key={d} className="w-2 h-2 rounded-full bg-slate-500 animate-bounce" style={{ animationDelay: `${d}ms` }} />
+                    ))}
+                  </span>
+                )}
               </div>
             </div>
           </div>
         ))}
-        {isTyping && (
-          <div className="flex gap-3">
-            <div className="w-8 h-8 rounded-full bg-sky-600/20 border border-sky-600/30 flex items-center justify-center">
-              <Bot size={16} className="text-sky-400" />
-            </div>
-            <div className="bg-slate-800 px-4 py-3 rounded-2xl rounded-tl-sm flex gap-1 items-center">
-              {[0, 150, 300].map(d => <span key={d} className="w-2 h-2 rounded-full bg-slate-500 animate-bounce" style={{ animationDelay: `${d}ms` }} />)}
-            </div>
-          </div>
-        )}
         <div ref={bottomRef} />
       </div>
 
@@ -178,9 +195,9 @@ export default function OralSim() {
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() } }}
             placeholder="Type your answer... (Enter to send, Shift+Enter for new line)"
             className="input-field flex-1 resize-none h-20"
-            disabled={isTyping}
+            disabled={isStreaming}
           />
-          <button onClick={sendMessage} disabled={!input.trim() || isTyping} className="btn-primary px-4 self-end disabled:opacity-50">
+          <button onClick={sendMessage} disabled={!input.trim() || isStreaming} className="btn-primary px-4 self-end disabled:opacity-50">
             <Send size={16} />
           </button>
         </div>
