@@ -30,6 +30,8 @@ const plans = [
     description: 'Everything you need to ace your private pilot certificate.',
     tier: 'basic',
     badge: 'Most Popular',
+    image: 'https://images.pexels.com/photos/62623/wing-plane-flying-airplane-62623.jpeg?auto=compress&cs=tinysrgb&w=800',
+    imageAlt: 'Small aircraft wing in flight at sunset',
     features: [
       { text: 'Full PPL & IFR question banks (5,000+ questions)', included: true },
       { text: 'Unlimited timed practice exams', included: true },
@@ -48,6 +50,8 @@ const plans = [
     period: '/month',
     description: 'The complete toolkit for serious career-track pilots.',
     tier: 'pro',
+    image: 'https://images.pexels.com/photos/912050/pexels-photo-912050.jpeg?auto=compress&cs=tinysrgb&w=800',
+    imageAlt: 'Commercial jet cockpit at altitude',
     features: [
       { text: 'All question banks: PPL, IFR, CPL, ATP', included: true },
       { text: 'Unlimited timed practice exams', included: true },
@@ -148,6 +152,16 @@ export default function Pricing() {
                   {'badge' in plan && plan.badge && (
                     <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
                       <span className="bg-sky-600 text-white text-xs font-semibold px-4 py-1.5 rounded-full">{plan.badge as string}</span>
+                    </div>
+                  )}
+                  {'image' in plan && plan.image && (
+                    <div className="relative -mx-8 -mt-8 mb-6 h-36 overflow-hidden rounded-t-2xl">
+                      <img
+                        src={plan.image as string}
+                        alt={plan.imageAlt as string}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-900/90" />
                     </div>
                   )}
                   <div className="mb-6">
