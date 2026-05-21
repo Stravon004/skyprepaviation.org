@@ -200,8 +200,14 @@ export default function Pricing() {
             })}
           </div>
 
-          <div className="mt-12 text-center">
+          <div className="mt-12 text-center space-y-3">
             <p className="text-slate-500 text-sm">All plans come with a 7-day money-back guarantee. Cancel anytime.</p>
+            <p className="text-slate-600 text-xs">
+              By subscribing you agree to our{' '}
+              <Link to="/terms" className="text-slate-500 hover:text-slate-300 underline">Terms of Service</Link>
+              {' '}and{' '}
+              <Link to="/privacy" className="text-slate-500 hover:text-slate-300 underline">Privacy Policy</Link>.
+            </p>
           </div>
         </div>
       </section>

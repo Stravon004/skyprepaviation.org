@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
-import { BookOpen, Brain, MessageSquare, TrendingUp, ArrowRight, CircleCheck as CheckCircle, Clock, Target } from 'lucide-react'
+import { BookOpen, Brain, MessageSquare, TrendingUp, ArrowRight, CircleCheck as CheckCircle, Clock, Target, CreditCard } from 'lucide-react'
 
 interface ExamSession {
   id: string
@@ -18,7 +18,34 @@ export default function Dashboard() {
   const [avgScore, setAvgScore] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const isStudent = profile?.subscription_tier === 'student' || profile?.subscription_tier === 'pro'
+  const isStudent = profile?.subscription_tier === 'basic' || profile?.subscription_tier === 'pro'
+  const isPaid = isStudent
+  const [portalLoading, setPortalLoading] = useState(false)
+
+  async function openBillingPortal() {
+    setPortalLoading(true)
+    try {
+      const { data: { session: authSession } } = await supabase.auth.getSession()
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/billing-portal`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authSession?.access_token}`,
+            'Apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({ return_url: window.location.href }),
+        }
+      )
+      const data = await res.json()
+      if (data.url) window.location.href = data.url
+    } catch {
+      // silently fail — portal link not critical
+    } finally {
+      setPortalLoading(false)
+    }
+  }
 
   useEffect(() => {
     async function load() {
@@ -53,6 +80,19 @@ export default function Dashboard() {
         </h1>
         <p className="text-slate-400">Continue your training where you left off.</p>
       </div>
+
+      {isPaid && (
+        <div className="mb-8 bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-white font-semibold capitalize">{profile?.subscription_tier} Plan</p>
+            <p className="text-slate-400 text-sm mt-0.5">Manage your subscription, update payment method, or cancel anytime.</p>
+          </div>
+          <button onClick={openBillingPortal} disabled={portalLoading} className="btn-secondary text-sm whitespace-nowrap flex items-center gap-2 disabled:opacity-60">
+            {portalLoading ? <span className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" /> : <CreditCard size={15} />}
+            Manage Billing
+          </button>
+        </div>
+      )}
 
       {!isStudent && (
         <div className="mb-8 bg-gradient-to-r from-sky-900/40 to-slate-900 border border-sky-800/40 rounded-2xl p-5 flex items-center justify-between gap-4">

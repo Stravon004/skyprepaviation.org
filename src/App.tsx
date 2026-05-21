@@ -3,6 +3,8 @@ import { useAuth } from './contexts/AuthContext'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import Dashboard from './pages/Dashboard'
 import Exam from './pages/Exam'
 import Flashcards from './pages/Flashcards'
@@ -10,6 +12,8 @@ import OralSim from './pages/OralSim'
 import Results from './pages/Results'
 import Pricing from './pages/Pricing'
 import PaymentSuccess from './pages/PaymentSuccess'
+import Terms from './pages/Terms'
+import Privacy from './pages/Privacy'
 import Layout from './components/Layout'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -31,6 +35,10 @@ export default function App() {
       <Route path="/payment-success" element={<PaymentSuccess />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/privacy" element={<Privacy />} />
       <Route element={<Layout />}>
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/exam" element={<ProtectedRoute><Exam /></ProtectedRoute>} />
