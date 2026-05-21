@@ -9,6 +9,7 @@ import Flashcards from './pages/Flashcards'
 import OralSim from './pages/OralSim'
 import Results from './pages/Results'
 import Pricing from './pages/Pricing'
+import PaymentSuccess from './pages/PaymentSuccess'
 import Layout from './components/Layout'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -27,6 +28,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/pricing" element={<Pricing />} />
+      <Route path="/payment-success" element={<PaymentSuccess />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route element={<Layout />}>

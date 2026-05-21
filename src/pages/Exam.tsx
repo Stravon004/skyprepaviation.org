@@ -71,8 +71,8 @@ export default function Exam() {
       .select('id, question, options, correct_answer, explanation, category')
       .eq('certificate', selectedCert)
       .limit(CERT_QUESTION_COUNTS[selectedCert])
-    if (error || !data || data.length === 0) {
-      setLoadError('No questions available for this exam. Please try another certificate.')
+    if (error || !data || data.length < 5) {
+      setLoadError('Not enough questions available for this exam. Please try another certificate.')
       return
     }
     const shuffled = [...data].sort(() => Math.random() - 0.5)
