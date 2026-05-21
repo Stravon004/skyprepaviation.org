@@ -8,18 +8,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 }
 
-const priceBasic = Deno.env.get("STRIPE_PRICE_BASIC")
-const pricePro = Deno.env.get("STRIPE_PRICE_PRO")
-
-if (!priceBasic || !pricePro) {
-  throw new Error("STRIPE_PRICE_BASIC and STRIPE_PRICE_PRO environment variables must be set")
-}
-
-const PRICE_IDS: Record<string, string> = {
-  basic: priceBasic,
-  pro: pricePro,
-}
-
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders })
@@ -49,6 +37,11 @@ Deno.serve(async (req: Request) => {
     }
 
     const { plan, successUrl, cancelUrl } = await req.json()
+
+    const PRICE_IDS: Record<string, string | undefined> = {
+      basic: Deno.env.get("STRIPE_PRICE_BASIC"),
+      pro: Deno.env.get("STRIPE_PRICE_PRO"),
+    }
 
     if (!plan || !PRICE_IDS[plan]) {
       return new Response(JSON.stringify({ error: "Invalid plan" }), {
@@ -102,7 +95,7 @@ Deno.serve(async (req: Request) => {
       mode: "subscription",
       customer: customerId,
       payment_method_types: ["card"],
-      line_items: [{ price: PRICE_IDS[plan], quantity: 1 }],
+      line_items: [{ price: PRICE_IDS[plan] as string, quantity: 1 }],
       success_url: successUrl,
       cancel_url: cancelUrl,
       metadata: {
