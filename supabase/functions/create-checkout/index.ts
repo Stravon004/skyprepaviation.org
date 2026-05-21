@@ -8,9 +8,16 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 }
 
+const priceBasic = Deno.env.get("STRIPE_PRICE_BASIC")
+const pricePro = Deno.env.get("STRIPE_PRICE_PRO")
+
+if (!priceBasic || !pricePro) {
+  throw new Error("STRIPE_PRICE_BASIC and STRIPE_PRICE_PRO environment variables must be set")
+}
+
 const PRICE_IDS: Record<string, string> = {
-  basic: Deno.env.get("STRIPE_PRICE_BASIC") ?? "price_1TZa3QDP2g5JC8ynrcBj42T5",
-  pro: Deno.env.get("STRIPE_PRICE_PRO") ?? "price_1TZa4GDP2g5JC8ynIVnJd2hQ",
+  basic: priceBasic,
+  pro: pricePro,
 }
 
 Deno.serve(async (req: Request) => {

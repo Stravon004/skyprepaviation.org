@@ -21,9 +21,11 @@ export default function Dashboard() {
   const isStudent = profile?.subscription_tier === 'basic' || profile?.subscription_tier === 'pro'
   const isPaid = isStudent
   const [portalLoading, setPortalLoading] = useState(false)
+  const [portalError, setPortalError] = useState(false)
 
   async function openBillingPortal() {
     setPortalLoading(true)
+    setPortalError(false)
     try {
       const { data: { session: authSession } } = await supabase.auth.getSession()
       const res = await fetch(
@@ -39,9 +41,13 @@ export default function Dashboard() {
         }
       )
       const data = await res.json()
-      if (data.url) window.location.href = data.url
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        setPortalError(true)
+      }
     } catch {
-      // silently fail — portal link not critical
+      setPortalError(true)
     } finally {
       setPortalLoading(false)
     }
@@ -87,10 +93,13 @@ export default function Dashboard() {
             <p className="text-white font-semibold capitalize">{profile?.subscription_tier} Plan</p>
             <p className="text-slate-400 text-sm mt-0.5">Manage your subscription, update payment method, or cancel anytime.</p>
           </div>
-          <button onClick={openBillingPortal} disabled={portalLoading} className="btn-secondary text-sm whitespace-nowrap flex items-center gap-2 disabled:opacity-60">
-            {portalLoading ? <span className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" /> : <CreditCard size={15} />}
-            Manage Billing
-          </button>
+          <div className="flex flex-col items-end gap-1">
+            <button onClick={openBillingPortal} disabled={portalLoading} className="btn-secondary text-sm whitespace-nowrap flex items-center gap-2 disabled:opacity-60">
+              {portalLoading ? <span className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" /> : <CreditCard size={15} />}
+              Manage Billing
+            </button>
+            {portalError && <p className="text-red-400 text-xs">Could not open billing portal. Please try again.</p>}
+          </div>
         </div>
       )}
 

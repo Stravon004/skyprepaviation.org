@@ -24,6 +24,7 @@ export default function Settings() {
   const [showDeletePanel, setShowDeletePanel] = useState(false)
 
   const [portalLoading, setPortalLoading] = useState(false)
+  const [portalError, setPortalError] = useState(false)
 
   const isPaid = profile?.subscription_tier === 'basic' || profile?.subscription_tier === 'pro'
 
@@ -54,6 +55,7 @@ export default function Settings() {
 
   async function openBillingPortal() {
     setPortalLoading(true)
+    setPortalError(false)
     try {
       const { data: { session: authSession } } = await supabase.auth.getSession()
       const res = await fetch(
@@ -69,7 +71,13 @@ export default function Settings() {
         }
       )
       const data = await res.json()
-      if (data.url) window.location.href = data.url
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        setPortalError(true)
+      }
+    } catch {
+      setPortalError(true)
     } finally {
       setPortalLoading(false)
     }
@@ -170,9 +178,12 @@ export default function Settings() {
               )}
             </div>
             {isPaid ? (
-              <button onClick={openBillingPortal} disabled={portalLoading} className="btn-secondary text-sm flex items-center gap-2 disabled:opacity-60">
-                {portalLoading ? <span className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" /> : 'Manage Billing'}
-              </button>
+              <div className="flex flex-col items-end gap-1">
+                <button onClick={openBillingPortal} disabled={portalLoading} className="btn-secondary text-sm flex items-center gap-2 disabled:opacity-60">
+                  {portalLoading ? <span className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" /> : 'Manage Billing'}
+                </button>
+                {portalError && <p className="text-red-400 text-xs">Could not open billing portal. Please try again.</p>}
+              </div>
             ) : (
               <a href="/pricing" className="btn-primary text-sm">Upgrade</a>
             )}

@@ -9,6 +9,7 @@ export default function PaymentSuccess() {
   const { user, refreshProfile } = useAuth()
   const plan = searchParams.get('plan') ?? 'basic'
   const [verified, setVerified] = useState(false)
+  const [timedOut, setTimedOut] = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -22,10 +23,13 @@ export default function PaymentSuccess() {
         .maybeSingle()
 
       const active = data?.subscription_tier === 'basic' || data?.subscription_tier === 'pro'
-      if (active || attempts >= 12) {
+      if (active) {
         clearInterval(interval)
-        if (active) await refreshProfile()
+        await refreshProfile()
         setVerified(true)
+      } else if (attempts >= 12) {
+        clearInterval(interval)
+        setTimedOut(true)
       }
     }, 2000)
     return () => clearInterval(interval)
@@ -44,12 +48,25 @@ export default function PaymentSuccess() {
         <p className="text-slate-500 text-sm mb-8">
           {verified
             ? 'Your account has been upgraded. All features are now unlocked.'
+            : timedOut
+            ? 'This is taking longer than expected. Your payment was received — check your email or refresh below.'
             : 'Activating your subscription — this takes just a moment...'}
         </p>
 
-        {!verified && (
+        {!verified && !timedOut && (
           <div className="flex justify-center mb-8">
             <span className="w-6 h-6 border-2 border-sky-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+
+        {timedOut && (
+          <div className="flex flex-col items-center gap-3 mb-8">
+            <button onClick={() => window.location.reload()} className="btn-secondary text-sm">
+              Refresh Page
+            </button>
+            <a href="mailto:support@skyprep.app" className="text-slate-500 text-xs hover:text-slate-300 transition-colors">
+              Contact support
+            </a>
           </div>
         )}
 
