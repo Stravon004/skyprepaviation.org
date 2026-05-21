@@ -39,8 +39,8 @@ Deno.serve(async (req: Request) => {
     const { plan, successUrl, cancelUrl } = await req.json()
 
     const PRICE_IDS: Record<string, string | undefined> = {
-      basic: Deno.env.get("STRIPE_PRICE_BASIC"),
-      pro: Deno.env.get("STRIPE_PRICE_PRO"),
+      basic: Deno.env.get("STRIPE_PRICE_BASIC") ?? "price_1TZa3QDP2g5JC8ynrcBj42T5",
+      pro: Deno.env.get("STRIPE_PRICE_PRO") ?? "price_1TZa4GDP2g5JC8ynIVnJd2hQ",
     }
 
     if (!plan || !PRICE_IDS[plan]) {
