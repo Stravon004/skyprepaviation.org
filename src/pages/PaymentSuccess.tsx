@@ -16,17 +16,18 @@ export default function PaymentSuccess() {
     const interval = setInterval(async () => {
       attempts++
       const { data } = await supabase
-        .from('profiles')
-        .select('subscription_tier')
-        .eq('id', user.id)
-        .maybeSingle()
-      if (data?.subscription_tier === plan || attempts >= 10) {
+        .from('stripe_user_subscriptions')
+        .select('subscription_status')
+        .maybeSingle() as { data: { subscription_status: string } | null }
+
+      const active = data?.subscription_status === 'active' || data?.subscription_status === 'trialing'
+      if (active || attempts >= 12) {
         clearInterval(interval)
         setVerified(true)
       }
-    }, 1500)
+    }, 2000)
     return () => clearInterval(interval)
-  }, [user, plan])
+  }, [user])
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">

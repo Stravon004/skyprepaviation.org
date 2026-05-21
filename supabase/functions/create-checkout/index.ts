@@ -1,6 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
-import Stripe from "npm:stripe@14"
-import { createClient } from "npm:@supabase/supabase-js@2"
+import Stripe from "npm:stripe@17.7.0"
+import { createClient } from "npm:@supabase/supabase-js@2.49.1"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -27,13 +27,13 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    const supabase = createClient(
+    const supabaseUser = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: authHeader } } }
     )
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    const { data: { user }, error: userError } = await supabaseUser.auth.getUser()
     if (userError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -58,16 +58,46 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    const stripe = new Stripe(stripeKey, { apiVersion: "2024-06-20" })
+    const stripe = new Stripe(stripeKey, {
+      appInfo: { name: "SkyPrep Aviation", version: "1.0.0" },
+    })
+
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    )
+
+    // Find or create Stripe customer
+    const { data: existing } = await supabaseAdmin
+      .from("stripe_customers")
+      .select("customer_id")
+      .eq("user_id", user.id)
+      .maybeSingle()
+
+    let customerId: string
+
+    if (existing?.customer_id) {
+      customerId = existing.customer_id
+    } else {
+      const customer = await stripe.customers.create({
+        email: user.email,
+        metadata: { user_id: user.id },
+      })
+      customerId = customer.id
+
+      await supabaseAdmin.from("stripe_customers").insert({
+        user_id: user.id,
+        customer_id: customerId,
+      })
+    }
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
+      customer: customerId,
       payment_method_types: ["card"],
       line_items: [{ price: PRICE_IDS[plan], quantity: 1 }],
       success_url: successUrl,
       cancel_url: cancelUrl,
-      client_reference_id: user.id,
-      customer_email: user.email,
       metadata: {
         user_id: user.id,
         plan,
