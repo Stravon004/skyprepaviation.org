@@ -86,11 +86,27 @@ export default function Settings() {
   async function deleteAccount() {
     if (deleteConfirm !== 'DELETE') return
     setDeleteLoading(true)
-    // Sign out first to clear session, then delete via service role (handled by RLS/trigger)
-    // For now we mark the profile as deleted and sign out — full deletion requires a server function
-    await supabase.from('profiles').update({ full_name: '[deleted]', email: `deleted_${user!.id}@skyprep.app` }).eq('id', user!.id)
-    await signOut()
-    navigate('/')
+    try {
+      const { data: { session: authSession } } = await supabase.auth.getSession()
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-account`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authSession?.access_token}`,
+            'Apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+        }
+      )
+      const data = await res.json()
+      if (data.success) {
+        await signOut()
+        navigate('/')
+      }
+    } finally {
+      setDeleteLoading(false)
+    }
   }
 
   return (

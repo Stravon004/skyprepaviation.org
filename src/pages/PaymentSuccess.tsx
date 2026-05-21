@@ -27,7 +27,7 @@ export default function PaymentSuccess() {
         clearInterval(interval)
         await refreshProfile()
         setVerified(true)
-      } else if (attempts >= 12) {
+      } else if (attempts >= 30) {
         clearInterval(interval)
         setTimedOut(true)
       }
