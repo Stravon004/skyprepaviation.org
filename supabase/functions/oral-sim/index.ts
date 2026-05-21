@@ -78,7 +78,7 @@ Deno.serve(async (req: Request) => {
     const client = new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY')! });
 
     const stream = await client.messages.stream({
-      model: 'claude-opus-4-7',
+      model: 'claude-haiku-4-5',
       max_tokens: 512,
       system: systemPrompt,
       messages,
