@@ -1,5 +1,6 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import Anthropic from 'npm:@anthropic-ai/sdk@0.52.0';
+import { createClient } from 'npm:@supabase/supabase-js@2.49.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -27,12 +28,41 @@ const SCENARIO_CONTEXT: Record<string, string> = {
   navigation: 'Focus on navigation: dead reckoning, pilotage, VOR/DME, GPS, ILS approaches, lost procedures, diversion techniques.',
 };
 
+const supabase = createClient(
+  Deno.env.get('SUPABASE_URL')!,
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+);
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
   try {
+    // Auth check — require valid session
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders });
+    }
+
+    // Subscription check — require basic or pro
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('subscription_tier')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    const tier = profile?.subscription_tier ?? 'free';
+    if (tier !== 'basic' && tier !== 'pro') {
+      return Response.json({ error: 'Subscription required' }, { status: 403, headers: corsHeaders });
+    }
+
     const { scenario, messages } = await req.json() as {
       scenario: string;
       messages: Array<{ role: 'user' | 'assistant'; content: string }>;

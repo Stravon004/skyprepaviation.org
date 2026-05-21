@@ -33,7 +33,7 @@ export default function Exam() {
 
   const availableCerts: Cert[] = profile?.subscription_tier === 'pro'
     ? ['PPL', 'IFR', 'CPL', 'ATP']
-    : profile?.subscription_tier === 'student'
+    : profile?.subscription_tier === 'basic'
     ? ['PPL', 'IFR']
     : ['PPL']
 

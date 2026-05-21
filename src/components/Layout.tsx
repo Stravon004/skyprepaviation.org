@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { LayoutDashboard, BookOpen, Brain, MessageSquare, LogOut, ChevronRight } from 'lucide-react'
+import { LayoutDashboard, BookOpen, Brain, MessageSquare, LogOut, ChevronRight, Settings } from 'lucide-react'
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -60,6 +60,13 @@ export default function Layout() {
               <p className="text-xs text-slate-500 capitalize">{profile?.subscription_tier ?? 'free'} plan</p>
             </div>
           </div>
+          <Link
+            to="/settings"
+            className="w-full flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-slate-100 hover:bg-slate-800 rounded-xl text-sm font-medium transition-all mb-1"
+          >
+            <Settings size={16} />
+            Settings
+          </Link>
           <button
             onClick={handleSignOut}
             className="w-full flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl text-sm font-medium transition-all"

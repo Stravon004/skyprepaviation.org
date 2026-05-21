@@ -19,7 +19,7 @@ export default function Signup() {
     setLoading(true)
     const { error } = await signUp(email, password, fullName)
     setLoading(false)
-    if (error) { setError(error.message) } else { navigate('/dashboard') }
+    if (error) { setError(error.message) } else { navigate('/welcome') }
   }
 
   return (
