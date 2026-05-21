@@ -9,8 +9,8 @@ const corsHeaders = {
 }
 
 const PRICE_IDS: Record<string, string> = {
-  student: Deno.env.get("STRIPE_PRICE_STUDENT") ?? "",
-  pro: Deno.env.get("STRIPE_PRICE_PRO") ?? "",
+  basic: Deno.env.get("STRIPE_PRICE_BASIC") ?? "price_1TZa3QDP2g5JC8ynrcBj42T5",
+  pro: Deno.env.get("STRIPE_PRICE_PRO") ?? "price_1TZa4GDP2g5JC8ynIVnJd2hQ",
 }
 
 Deno.serve(async (req: Request) => {

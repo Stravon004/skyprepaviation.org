@@ -24,11 +24,11 @@ const plans = [
     highlight: false,
   },
   {
-    name: 'Student',
+    name: 'Basic',
     price: 19,
     period: '/month',
     description: 'Everything you need to ace your private pilot certificate.',
-    tier: 'student',
+    tier: 'basic',
     badge: 'Most Popular',
     features: [
       { text: 'Full PPL & IFR question banks (5,000+ questions)', included: true },
@@ -39,7 +39,7 @@ const plans = [
       { text: 'AI oral exam simulator (10 sessions/mo)', included: true },
       { text: 'CPL / ATP question banks', included: false },
     ],
-    cta: 'Start Student Plan',
+    cta: 'Start Basic Plan',
     highlight: true,
   },
   {
