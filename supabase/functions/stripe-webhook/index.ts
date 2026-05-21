@@ -172,7 +172,7 @@ async function syncCustomerFromStripe(customerId: string) {
     if (customerRow?.user_id) {
       const plan = subscription.metadata?.plan ?? null;
       const isActive = subscription.status === 'active' || subscription.status === 'trialing';
-      const tier = isActive && (plan === 'student' || plan === 'pro') ? plan : 'free';
+      const tier = isActive && (plan === 'basic' || plan === 'pro') ? plan : 'free';
       const expiresAt = isActive
         ? new Date(subscription.current_period_end * 1000).toISOString()
         : null;

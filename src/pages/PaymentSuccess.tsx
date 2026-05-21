@@ -6,8 +6,8 @@ import { CircleCheck as CheckCircle, ArrowRight } from 'lucide-react'
 
 export default function PaymentSuccess() {
   const [searchParams] = useSearchParams()
-  const { user } = useAuth()
-  const plan = searchParams.get('plan') ?? 'student'
+  const { user, refreshProfile } = useAuth()
+  const plan = searchParams.get('plan') ?? 'basic'
   const [verified, setVerified] = useState(false)
 
   useEffect(() => {
@@ -16,13 +16,15 @@ export default function PaymentSuccess() {
     const interval = setInterval(async () => {
       attempts++
       const { data } = await supabase
-        .from('stripe_user_subscriptions')
-        .select('subscription_status')
-        .maybeSingle() as { data: { subscription_status: string } | null }
+        .from('profiles')
+        .select('subscription_tier')
+        .eq('id', user.id)
+        .maybeSingle()
 
-      const active = data?.subscription_status === 'active' || data?.subscription_status === 'trialing'
+      const active = data?.subscription_tier === 'basic' || data?.subscription_tier === 'pro'
       if (active || attempts >= 12) {
         clearInterval(interval)
+        if (active) await refreshProfile()
         setVerified(true)
       }
     }, 2000)
